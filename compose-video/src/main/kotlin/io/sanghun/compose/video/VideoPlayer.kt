@@ -23,14 +23,7 @@ import android.os.Looper
 import android.widget.ImageButton
 import androidx.activity.compose.BackHandler
 import androidx.annotation.FloatRange
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -43,19 +36,14 @@ import androidx.media3.common.C
 import androidx.media3.common.C.AUDIO_CONTENT_TYPE_MOVIE
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
-import androidx.media3.common.util.RepeatModeUtil.REPEAT_TOGGLE_MODE_ALL
-import androidx.media3.common.util.RepeatModeUtil.REPEAT_TOGGLE_MODE_NONE
-import androidx.media3.common.util.RepeatModeUtil.REPEAT_TOGGLE_MODE_ONE
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.common.util.RepeatModeUtil.*
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import androidx.media3.ui.PlayerView
-import io.sanghun.compose.video.cache.VideoPlayerCacheManager
 import io.sanghun.compose.video.controller.VideoPlayerControllerConfig
 import io.sanghun.compose.video.controller.applyToExoPlayerView
+import io.sanghun.compose.video.datasource.DataSourceConfig
+import io.sanghun.compose.video.datasource.DefaultDataSourceConfig
 import io.sanghun.compose.video.pip.enterPIPMode
 import io.sanghun.compose.video.pip.isActivityStatePipMode
 import io.sanghun.compose.video.uri.VideoPlayerMediaItem
@@ -63,9 +51,9 @@ import io.sanghun.compose.video.uri.toUri
 import io.sanghun.compose.video.util.findActivity
 import io.sanghun.compose.video.util.setFullScreen
 import kotlinx.coroutines.Dispatchers
-import java.util.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import java.util.*
 
 /**
  * [VideoPlayer] is UI component that can play video in Jetpack Compose. It works based on ExoPlayer.
@@ -108,6 +96,7 @@ import kotlinx.coroutines.withContext
 fun VideoPlayer(
     modifier: Modifier = Modifier,
     mediaItems: List<VideoPlayerMediaItem>,
+    dataSourceConfig: DataSourceConfig = DefaultDataSourceConfig(),
     handleLifecycle: Boolean = true,
     autoPlay: Boolean = true,
     usePlayerController: Boolean = true,
@@ -134,8 +123,6 @@ fun VideoPlayer(
     var mediaSession = remember<MediaSession?> { null }
 
     val player = remember {
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-
         ExoPlayer.Builder(context)
             .setSeekBackIncrementMs(seekBeforeMilliSeconds)
             .setSeekForwardIncrementMs(seekAfterMilliSeconds)
@@ -147,12 +134,8 @@ fun VideoPlayer(
                 handleAudioFocus,
             )
             .apply {
-                val cache = VideoPlayerCacheManager.getCache()
-                if (cache != null) {
-                    val cacheDataSourceFactory = CacheDataSource.Factory()
-                        .setCache(cache)
-                        .setUpstreamDataSourceFactory(DefaultDataSource.Factory(context, httpDataSourceFactory))
-                    setMediaSourceFactory(DefaultMediaSourceFactory(cacheDataSourceFactory))
+                dataSourceConfig.createMediaSourceFactory(context)?.let {
+                    setMediaSourceFactory(it)
                 }
             }
             .playerBuilder()
