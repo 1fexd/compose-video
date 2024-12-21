@@ -22,6 +22,10 @@ android {
         }
     }
 
+    kotlin {
+        jvmToolchain(17)
+    }
+
     targetProjectPath = ":sample"
     experimentalProperties["android.experimental.self-instrumenting"] = true
 }
