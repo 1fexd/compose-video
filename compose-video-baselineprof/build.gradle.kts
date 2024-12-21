@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "io.sanghun.compose.video.benchmark"
 
+
     compileSdk = 33
     defaultConfig {
         minSdk = 23
@@ -19,10 +20,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks.add("release")
         }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     targetProjectPath = ":sample"
